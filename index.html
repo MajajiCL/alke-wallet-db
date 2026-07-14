@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AlkeWallet - Interactive Database Playground</title>
+    <!-- Google Fonts: Outfit -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Stylesheet -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="glass-bg"></div>
+    <div class="app-container">
+        
+        <!-- Header -->
+        <header class="app-header">
+            <div class="header-logo">
+                <div class="logo-icon"><i class="fa-solid fa-wallet"></i></div>
+                <div class="logo-text">
+                    <h1>AlkeWallet</h1>
+                    <span>Base de Datos Interactiva (MySQL Engine Sim)</span>
+                </div>
+            </div>
+            <div class="header-status">
+                <div class="status-indicator">
+                    <span class="pulse-dot"></span>
+                    <span class="status-label">DB Engine: Active</span>
+                </div>
+                <a href="https://github.com/MajajiCL/alke-wallet-db" target="_blank" class="github-btn">
+                    <i class="fa-brands fa-github"></i> GitHub
+                </a>
+            </div>
+        </header>
+
+        <!-- Main Content Grid -->
+        <main class="app-grid">
+            
+            <!-- Left Column: Controls and Input -->
+            <section class="control-column">
+                
+                <!-- Transaction Simulator Card -->
+                <div class="glass-card card-simulator">
+                    <div class="card-header">
+                        <div class="card-title-icon"><i class="fa-solid fa-money-bill-transfer"></i></div>
+                        <h2>Simulador de Transacciones</h2>
+                    </div>
+                    <p class="card-desc">Ejecuta transferencias y prueba las restricciones de integridad y saldo de la base de datos.</p>
+                    
+                    <form id="transaction-form" class="sim-form">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="tx-sender"><i class="fa-solid fa-paper-plane"></i> Emisor</label>
+                                <select id="tx-sender" required>
+                                    <!-- Options populated dynamically -->
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="tx-receiver"><i class="fa-solid fa-user-check"></i> Receptor</label>
+                                <select id="tx-receiver" required>
+                                    <!-- Options populated dynamically -->
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="tx-currency"><i class="fa-solid fa-coins"></i> Moneda</label>
+                                <select id="tx-currency" required>
+                                    <!-- Options populated dynamically -->
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="tx-amount"><i class="fa-solid fa-dollar-sign"></i> Importe</label>
+                                <input type="number" id="tx-amount" step="0.01" min="-1000" placeholder="0.00" required>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="submit-btn">
+                            <i class="fa-solid fa-play"></i> Ejecutar Transferencia (COMMIT)
+                        </button>
+                    </form>
+                </div>
+
+                <!-- SQL Console Simulator Card -->
+                <div class="glass-card card-console">
+                    <div class="card-header">
+                        <div class="card-title-icon"><i class="fa-solid fa-terminal"></i></div>
+                        <h2>Consola de Consultas SQL</h2>
+                    </div>
+                    <p class="card-desc">Selecciona consultas predefinidas o escribe tus comandos de simulación SQL.</p>
+                    
+                    <div class="preset-queries-group">
+                        <label for="query-presets">Consultas Predefinidas:</label>
+                        <select id="query-presets">
+                            <option value="all-users">SELECT * FROM usuario;</option>
+                            <option value="all-transactions">SELECT * FROM transaccion ORDER BY transaction_date DESC;</option>
+                            <option value="all-currencies">SELECT * FROM moneda;</option>
+                            <option value="balances-by-currency">SELECT currency_name, SUM(saldo) FROM usuario JOIN moneda GROUP BY currency_name;</option>
+                            <option value="users-usd">SELECT * FROM usuario WHERE currency_id = 2;</option>
+                        </select>
+                    </div>
+
+                    <div class="sql-editor-container">
+                        <textarea id="sql-editor" spellcheck="false">SELECT * FROM usuario;</textarea>
+                    </div>
+                    
+                    <div class="console-actions">
+                        <button id="run-sql-btn" class="secondary-btn">
+                            <i class="fa-solid fa-bolt"></i> Ejecutar Consulta
+                        </button>
+                        <button id="reset-db-btn" class="danger-btn">
+                            <i class="fa-solid fa-rotate-left"></i> Reiniciar Base de Datos (ROLLBACK)
+                        </button>
+                    </div>
+
+                    <!-- SQL Log & Result Console -->
+                    <div class="sql-console-log">
+                        <div class="console-log-header">
+                            <span>Resultado de la Consola SQL</span>
+                            <span id="console-status" class="success-status">OK</span>
+                        </div>
+                        <div class="console-log-body">
+                            <pre id="console-output">-- Presiona "Ejecutar Consulta" para ver los resultados aquí.</pre>
+                        </div>
+                    </div>
+                </div>
+
+            </section>
+
+            <!-- Right Column: Visual Databases & Schemas -->
+            <section class="display-column">
+                
+                <!-- Display Tabs -->
+                <div class="display-tabs">
+                    <button class="tab-btn active" data-tab="tab-tables">
+                        <i class="fa-solid fa-table"></i> Tablas en Vivo
+                    </button>
+                    <button class="tab-btn" data-tab="tab-erd">
+                        <i class="fa-solid fa-diagram-project"></i> Diagrama ERD & Relaciones
+                    </button>
+                    <button class="tab-btn" data-tab="tab-code">
+                        <i class="fa-solid fa-code"></i> Código SQL Mejorado
+                    </button>
+                </div>
+
+                <!-- Tab Content: Live Tables -->
+                <div id="tab-tables" class="tab-content active">
+                    
+                    <!-- Table: USUARIOS -->
+                    <div class="table-card">
+                        <div class="table-card-header">
+                            <h3><i class="fa-solid fa-users"></i> Tabla: <code>usuario</code></h3>
+                            <span class="badge">Registro de Cuentas</span>
+                        </div>
+                        <div class="table-responsive">
+                            <table id="table-usuario">
+                                <thead>
+                                    <tr>
+                                        <th>user_id (PK)</th>
+                                        <th>nombre</th>
+                                        <th>correo_electronico</th>
+                                        <th>contrasena (Hash)</th>
+                                        <th>saldo</th>
+                                        <th>currency_id (FK)</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- Populated dynamically -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Flex Row for Monedas and Transactions -->
+                    <div class="table-row-split">
+                        
+                        <!-- Table: MONEDAS -->
+                        <div class="table-card split-half">
+                            <div class="table-card-header">
+                                <h3><i class="fa-solid fa-coins"></i> Tabla: <code>moneda</code></h3>
+                                <span class="badge badge-blue">Divisas</span>
+                            </div>
+                            <div class="table-responsive">
+                                <table id="table-moneda">
+                                    <thead>
+                                        <tr>
+                                            <th>currency_id (PK)</th>
+                                            <th>currency_name</th>
+                                            <th>currency_symbol</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <!-- Populated dynamically -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Table: TRANSACCIONES -->
+                        <div class="table-card split-double">
+                            <div class="table-card-header">
+                                <h3><i class="fa-solid fa-list-check"></i> Tabla: <code>transaccion</code></h3>
+                                <span class="badge badge-purple">Historial</span>
+                            </div>
+                            <div class="table-responsive">
+                                <table id="table-transaccion">
+                                    <thead>
+                                        <tr>
+                                            <th>transaction_id (PK)</th>
+                                            <th>sender_user_id (FK)</th>
+                                            <th>receiver_user_id (FK)</th>
+                                            <th>currency_id (FK)</th>
+                                            <th>importe</th>
+                                            <th>transaction_date</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <!-- Populated dynamically -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <!-- Tab Content: ERD Diagram -->
+                <div id="tab-erd" class="tab-content">
+                    <div class="erd-container">
+                        <h2>Esquema de Relaciones (Entity-Relationship)</h2>
+                        <p class="erd-intro">Representación visual del modelo de base de datos relacional y claves foráneas en la versión mejorada.</p>
+                        
+                        <div class="erd-diagram-workspace">
+                            
+                            <!-- Card: Moneda -->
+                            <div class="erd-table-card table-moneda-card">
+                                <div class="erd-table-header">moneda</div>
+                                <div class="erd-table-fields">
+                                    <div class="field pk">🔑 currency_id <span class="type">INT</span></div>
+                                    <div class="field">currency_name <span class="type">VARCHAR(50)</span></div>
+                                    <div class="field">currency_symbol <span class="type">VARCHAR(10)</span></div>
+                                </div>
+                            </div>
+
+                            <!-- Connector Line (CSS-based SVG overlay) -->
+                            <div class="erd-connections">
+                                <!-- SVG connecting lines -->
+                                <svg width="100%" height="100%" class="erd-svg-lines">
+                                    <defs>
+                                        <marker id="arrow" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                                            <path d="M 0 0 L 10 5 L 0 10 z" fill="#8b5cf6" />
+                                        </marker>
+                                        <marker id="circle" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6">
+                                            <circle cx="5" cy="5" r="3" fill="#10b981" />
+                                        </marker>
+                                    </defs>
+                                    <!-- Lines will be styled in CSS or hardcoded here -->
+                                </svg>
+                            </div>
+
+                            <!-- Card: Usuario -->
+                            <div class="erd-table-card table-usuario-card">
+                                <div class="erd-table-header">usuario</div>
+                                <div class="erd-table-fields">
+                                    <div class="field pk">🔑 user_id <span class="type">INT</span></div>
+                                    <div class="field">nombre <span class="type">VARCHAR(100)</span></div>
+                                    <div class="field unique">⚡ correo_electronico <span class="type">VARCHAR(100)</span></div>
+                                    <div class="field">contrasena <span class="type">VARCHAR(255)</span></div>
+                                    <div class="field check">🔒 saldo <span class="type">DECIMAL(15,2)</span></div>
+                                    <div class="field fk">🔗 currency_id <span class="type">INT</span></div>
+                                </div>
+                                <div class="erd-table-constraints">
+                                    <span>CHECK: saldo >= 0.00</span>
+                                </div>
+                            </div>
+
+                            <!-- Card: Transaccion -->
+                            <div class="erd-table-card table-transaccion-card">
+                                <div class="erd-table-header">transaccion</div>
+                                <div class="erd-table-fields">
+                                    <div class="field pk">🔑 transaction_id <span class="type">INT</span></div>
+                                    <div class="field fk">🔗 sender_user_id <span class="type">INT</span></div>
+                                    <div class="field fk">🔗 receiver_user_id <span class="type">INT</span></div>
+                                    <div class="field fk">🔗 currency_id <span class="type">INT</span></div>
+                                    <div class="field check">🔒 importe <span class="type">DECIMAL(15,2)</span></div>
+                                    <div class="field">transaction_date <span class="type">DATETIME</span></div>
+                                </div>
+                                <div class="erd-table-constraints">
+                                    <span>CHECK: importe > 0.00</span>
+                                    <span>CHECK: sender_user_id <> receiver_user_id</span>
+                                </div>
+                            </div>
+
+                        </div>
+                        
+                        <div class="erd-legend">
+                            <span class="legend-item"><span class="legend-color pk-color"></span> PK (Primary Key)</span>
+                            <span class="legend-item"><span class="legend-color fk-color"></span> FK (Foreign Key)</span>
+                            <span class="legend-item"><span class="legend-color check-color"></span> CHECK Constraint</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tab Content: SQL Code -->
+                <div id="tab-code" class="tab-content">
+                    <div class="sql-code-container">
+                        <div class="code-header">
+                            <span>schema_improved.sql</span>
+                            <button id="copy-sql-btn" class="copy-btn"><i class="fa-regular fa-copy"></i> Copiar Código</button>
+                        </div>
+                        <pre class="code-body"><code id="sql-code-display">-- ==========================================
+-- SCRIPT DE BASE DE DATOS MEJORADO: AlkeWallet
+-- ==========================================
+
+CREATE DATABASE IF NOT EXISTS AlkeWallet;
+USE AlkeWallet;
+
+-- 2. CREACIÓN DE LA TABLA MONEDA
+CREATE TABLE moneda (
+    currency_id INT AUTO_INCREMENT PRIMARY KEY,
+    currency_name VARCHAR(50) NOT NULL,
+    currency_symbol VARCHAR(10) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- 3. CREACIÓN DE LA TABLA USUARIO
+CREATE TABLE usuario (
+    user_id INT AUTO_INCREMENT PRIMARY KEY,
+    nombre VARCHAR(100) NOT NULL,
+    correo_electronico VARCHAR(100) NOT NULL UNIQUE,
+    contrasena VARCHAR(255) NOT NULL,
+    saldo DECIMAL(15, 2) NOT NULL DEFAULT 0.00,
+    currency_id INT NOT NULL,
+    
+    CONSTRAINT fk_usuario_moneda 
+        FOREIGN KEY (currency_id) REFERENCES moneda(currency_id)
+        ON DELETE RESTRICT ON UPDATE CASCADE,
+        
+    CONSTRAINT chk_usuario_saldo 
+        CHECK (saldo >= 0.00)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- 4. CREACIÓN DE LA TABLA TRANSACCION
+CREATE TABLE transaccion (
+    transaction_id INT AUTO_INCREMENT PRIMARY KEY,
+    sender_user_id INT NOT NULL,
+    receiver_user_id INT NOT NULL,
+    currency_id INT NOT NULL,
+    importe DECIMAL(15, 2) NOT NULL,
+    transaction_date DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    
+    CONSTRAINT fk_transaccion_sender 
+        FOREIGN KEY (sender_user_id) REFERENCES usuario(user_id)
+        ON DELETE RESTRICT ON UPDATE CASCADE,
+        
+    CONSTRAINT fk_transaccion_receiver 
+        FOREIGN KEY (receiver_user_id) REFERENCES usuario(user_id)
+        ON DELETE RESTRICT ON UPDATE CASCADE,
+        
+    CONSTRAINT fk_transaccion_moneda 
+        FOREIGN KEY (currency_id) REFERENCES moneda(currency_id)
+        ON DELETE RESTRICT ON UPDATE CASCADE,
+        
+    CONSTRAINT chk_transaccion_importe 
+        CHECK (importe > 0.00),
+        
+    CONSTRAINT chk_transaccion_diferentes_usuarios 
+        CHECK (sender_user_id <> receiver_user_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;</code></pre>
+                    </div>
+                </div>
+
+            </section>
+
+        </main>
+        
+        <!-- Footer -->
+        <footer class="app-footer-bar">
+            <p>&copy; 2026 AlkeWallet DB Project. Diseñado con ❤️ para la verificación interactiva de bases de datos relacionales.</p>
+        </footer>
+
+    </div>
+
+    <!-- Script file -->
+    <script src="script.js"></script>
+</body>
+</html>
